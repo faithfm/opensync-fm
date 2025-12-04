@@ -1,0 +1,58 @@
+#!/bin/bash
+
+case "$1" in
+    "pull")
+        sudo docker pull faithfm/opensyncfm:latest
+        ;;
+    "pull-dev")
+        sudo docker pull faithfm/opensyncfm:dev
+        ;;
+    "stop")
+        echo "Stopping opensyncfm..."
+        sudo docker stop opensyncfm
+        sudo docker rm opensyncfm
+        ;;
+    "start")
+        sudo docker run --restart unless-stopped -d -p 4000:4000 -v "/opensyncfm:/app/storage" --device /dev/snd --hostname="$(hostname)" --name opensyncfm faithfm/opensyncfm:latest  &&  docker system prune -a -f
+        sudo docker container ls
+        ;;
+    "start-dev")
+        sudo docker run --restart unless-stopped -d -p 4000:4000 -v "/opensyncfm:/app/storage" --device /dev/snd --hostname="$(hostname)" --name opensyncfm faithfm/opensyncfm:dev
+        sudo docker container ls
+        ;;
+    "restart")
+        echo "Stopping opensyncfm..."
+        sudo docker stop opensyncfm
+        sudo docker rm opensyncfm
+        sudo docker run --restart unless-stopped -d -p 4000:4000 -v "/opensyncfm:/app/storage" --device /dev/snd --hostname="$(hostname)" --name opensyncfm faithfm/opensyncfm:latest  &&  docker system prune -a -f
+        sudo docker container ls
+        ;;
+    "refresh")
+        sudo docker pull faithfm/opensyncfm:latest
+        echo "Stopping opensyncfm..."
+        sudo docker stop opensyncfm
+        sudo docker rm opensyncfm
+        sudo docker run --restart unless-stopped -d -p 4000:4000 -v "/opensyncfm:/app/storage" --device /dev/snd --hostname="$(hostname)" --name opensyncfm faithfm/opensyncfm:latest  &&  docker system prune -a -f
+        sudo docker container ls
+        ;;
+    "status")
+        sudo docker container ls
+        ;;
+    "logs")
+        LATEST_LOG=$(ls -t /opensyncfm/logs/opensyncfm-*.json 2>/dev/null | head -1)
+        if [ -n "$LATEST_LOG" ]; then
+            echo "Tailing most recent log file: $LATEST_LOG"
+            tail -f "$LATEST_LOG"
+        else
+            echo "No log files found matching /opensyncfm/logs/opensyncfm-*.json"
+            exit 1
+        fi
+        ;;
+    "bash")
+        sudo docker exec -it opensyncfm /bin/bash
+        ;;
+    *)
+        echo "Usage: osfm {pull|pull-dev|stop|start|start-dev|restart|logs|refresh|status|bash}"
+        exit 1
+        ;;
+esac
